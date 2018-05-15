@@ -11,34 +11,32 @@ var cheerio = require("cheerio");
 var models = require("../models/index.js");
 
 // Create all our routes and set up logic within those routes where required.
-router.get("/", function(req, res) {
-  models.Article.all(function(data) {
-    var hbsObject = {
-        news: data
-    };
-    console.log(hbsObject);
-    res.render("index", hbsObject);
-  });
+router.get('/', function(req, res, next) {
+    res.render('index', { title: 'Express' });
 });
+  
 
 // A GET route for scraping the echoJS website
 router.get("/scrape", function(req, res) {
     // First, we grab the body of the html with request
-    axios.get("http://www.foxnews.com/").then(function(response) {
+    axios.get("https://www.washingtonpost.com/opinions/the-posts-view/?utm_term=.ed2bd055905b").then(function(response) {
       // Then, we load that into cheerio and save it to $ for a shorthand selector
       var $ = cheerio.load(response.data);
   
       // Now, we grab every h2 within an article tag, and do the following:
-      $(".info").each(function(i, element) {
+      $(".story-body").each(function(i, element) {
         // Save an empty result object
         var result = {};
   
         // Add the text and href of every link, and save them as properties of the result object
         result.headline = $(this)
+          .children(".story-headline")
+          .children("h3")
           .children("a")
           .text();
         result.summary = $(this)
-          .children("ul")
+          .children(".story-description")
+          .children("p")
           .text();
         
   
@@ -47,6 +45,9 @@ router.get("/scrape", function(req, res) {
           .then(function(dbArticle) {
             // View the added result in the console
             console.log(dbArticle);
+          })
+          .catch(function(err){
+              console.log(err)
           });
       });
   
